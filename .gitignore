@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# macOS
+.DS_Store
+
+# Gradio
+.gradio/
+flagged/
+gradio_cached_examples/
+
+# Jupyter
+*.nbconvert.ipynb
