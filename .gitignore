@@ -1,3 +1,7 @@
+# Loaded artifacts — the app loads these; regenerate by running training/train_*.ipynb
+models/*.joblib
+!models/.gitkeep
+
 # Python
 __pycache__/
 *.py[cod]
