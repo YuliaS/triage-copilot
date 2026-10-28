@@ -140,7 +140,8 @@ def t_num(cols):
                              ("scale", StandardScaler(with_mean=False))]), list(cols))
 
 
-def make_clf(transformers, C: float = 1.0) -> Pipeline:
+# def make_clf(transformers, C: float = 1.0) -> Pipeline:
+def make_clf(transformers, C: float = 3.0) -> Pipeline:
     """Shared estimator: a ColumnTransformer feeding a class-balanced logistic regression."""
     return Pipeline([("features", ColumnTransformer(transformers)),
                      ("model", LogisticRegression(max_iter=4000, class_weight="balanced", C=C))])
