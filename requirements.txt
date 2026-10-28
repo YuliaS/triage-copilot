@@ -1,0 +1,9 @@
+# Trained and tested against these versions (Python 3.11).
+# The model bundles in models/ are pickled with scikit-learn 1.8.0 — load with the
+# same major/minor to avoid unpickling warnings.
+scikit-learn==1.8.0
+pandas==2.3.3
+numpy==2.4.6
+joblib==1.5.3
+gradio==6.30.0
+openpyxl==3.1.5
