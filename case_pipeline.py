@@ -251,6 +251,37 @@ def query_similar(retriever: dict, summary: str, k: int = 3) -> pd.DataFrame:
     return neighbours
 
 
+def recommend_resolutions(retriever: dict, summary: str, k: int = 10,
+                          min_similarity: float = 0.5, pool: int = 40):
+    """Recommend past cases to learn a resolution from.
+
+    Prefers cases that were actually solved; only if none match closely enough does
+    it fall back to the most similar unsolved cases, flagged for manual follow-up.
+    Weak matches below `min_similarity` are never recommended.
+
+    Returns (recommendations, message, kind) where kind is one of:
+      "solved"   -> recommendations are solved cases >= min_similarity
+      "unsolved" -> no solved match; closest unsolved cases, as a weaker fallback
+      "none"     -> nothing cleared the similarity floor
+    """
+    candidates = query_similar(retriever, summary, k=pool)
+    reliable = candidates[candidates["similarity"] >= min_similarity].copy()
+    if reliable.empty:
+        return reliable, ("No sufficiently similar past cases found. "
+                          "Manual investigation recommended."), "none"
+
+    is_solved = reliable["status"].astype(str).str.lower() == "solved"
+    solved = reliable[is_solved].sort_values("similarity", ascending=False)
+    if not solved.empty:
+        return solved.head(k), ("Recommendations based on similar previously "
+                                "solved cases."), "solved"
+
+    unsolved = reliable.sort_values("similarity", ascending=False)
+    return unsolved.head(k), ("No solved cases match closely enough. Showing the "
+                              "most similar unsolved cases for context; manual "
+                              "investigation recommended."), "unsolved"
+
+
 # =====================================================================
 # Tag suggester (workflow aid only — suggested tags are NEVER model inputs)
 # =====================================================================
