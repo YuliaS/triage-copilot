@@ -1,22 +1,24 @@
-# Northstar Triage Copilot — User Journey
+# Triage Copilot — User Journey
 
-A design document for a single Gradio application that serves five models
-(M1 Case type, M2 Category, M3 Priority, M4 Escalation risk, M5 Route-assign)
-behind one decision-support screen.
+A design document for the Gradio application that serves the predictive models
+(case type, category, two priority models, escalation risk, suggested route) plus
+two helper tools (tag suggestions, similar-case search) behind one decision-support
+app.
 
 ---
 
 ## 1. Who uses it
 
 **Primary user — frontline support agent ("Priya").**
-Opens each new case cold. Needs, in a few seconds: what kind of case this is,
-which team should own it, and whether it is likely to blow up. Not technical;
-will not read a confusion matrix; trusts the tool only if it explains itself.
+Opens each new case cold. Needs, in a few seconds: what kind of case this is, which
+team should own it, whether it is likely to escalate, and how similar cases were
+handled before. Not technical; will not read a confusion matrix; trusts the tool
+only if it explains itself.
 
 **Secondary user — team lead / reviewer ("Sam").**
 Wants to judge whether the tool is safe to rely on: how accurate is each model,
-where does it fail, what does it use to decide. Will look at numbers and at
-individual predictions against known outcomes.
+where it fails, and what it uses to decide. Looks at numbers and at individual
+predictions against known outcomes.
 
 These two needs map to the two tabs.
 
@@ -24,9 +26,9 @@ These two needs map to the two tabs.
 
 ## 2. The job to be done
 
-> "A new case just landed. Tell me what it is, where it goes, and how risky it
-> is — and show me why — so I can act in one glance instead of reading the whole
-> history and guessing."
+> "A new case just landed. Tell me what it is, where it goes, and how risky it is —
+> show me why, suggest the tags, and show me how similar cases were resolved — so I
+> can act in one glance instead of reading the whole history and guessing."
 
 Success = the agent accepts or overrides the suggestion in one action, and the
 suggestion is right often enough that overriding is the exception.
@@ -35,90 +37,73 @@ suggestion is right often enough that overriding is the exception.
 
 ## 3. Tab 1 — Triage a new case (the daily screen)
 
-**Layout.** Two columns. Left: the case inputs. Right: a single result card.
+**Layout.** Two columns. Left: the case inputs. Right: the result card, suggested
+tags, and similar past cases.
 
 **Journey.**
-1. Priya pastes the case summary and sets the few structured fields she already
-   knows at intake (channel, plan tier, region, SLA target, tenure, month).
-   Tags are optional — left blank if unknown.
+1. Priya pastes the case summary and sets the few structured fields known at intake
+   (channel, plan tier, month, tenure). She does **not** enter tags — tags are
+   leakage (written after a case is understood), so the tool suggests them instead.
+   Optionally she records the priority she would assign, to trigger a review check.
 2. She presses **Triage case**.
-3. The result card returns, laid out as label → value rows:
+3. The result card returns as label → value rows:
 
    | | |
    |---|---|
-   | **Case type** | Incident — 96% confidence |
-   | **Category** | Integrations — 91% |
+   | **Case type** | Incident — 94% |
+   | **Category** | Integrations — 90% |
+   | **Priority · direct** | Urgent — 61% |
+   | **Priority · review** | Urgent — 42% |
    | **Suggested route** | Engineering |
-   | **Risk** | High escalation risk |
-   | **Why** | Connector/authentication issue + incident language + historically high-escalation category |
+   | **Risk** | High escalation risk — 92% |
+   | **Why** | error, token, xero in summary + incident language + flagged above the escalation threshold |
 
-4. Risk is colour-coded (green / amber / red) so the eye lands on it first.
-5. The **Why** row names the actual signals behind the call — the top summary
-   terms that drove it, the case-type language, and the historical escalation
-   rate of the predicted category — so Priya can sanity-check rather than obey.
+4. Below the card, **suggested tags** appear as chips (clearly labelled a workflow
+   aid, not model inputs), and the **most similar past cases** are listed with their
+   team, resolution code, resolution time and status — the "what worked before" aid.
+5. Risk is colour-coded (green / amber / red). The **Why** row names the real
+   signals: top summary terms, case-type language, and the escalation decision.
 
-**Prefill.** A **Load example** button fills every input with a realistic
-integrations-incident case, so a first-time user (or a demo audience) can press
-one button and immediately see a full, meaningful result. This is the "show me
-how to run it" affordance.
+**Two priority models.** The *direct* model predicts a priority; the *review* model
+estimates one to **flag** cases where the agent is ≥2 levels off. The card shows both
+and marks when they disagree.
 
-**Design principles for this tab.**
-- One card, one glance. No tables of probabilities by default.
-- Every output is a plain-language phrase, not a class code.
-- Confidence shown as a percentage next to the label, not as a separate widget.
-- The only strong colour on the screen is the risk band.
+**Prefill.** A **Load example** button fills every input with a realistic case so a
+first-time user or a demo audience sees a full result in one click.
 
----
-
-## 4. Tab 2 — How the models work (the trust screen)
-
-For Sam, and for Priya on the day she stops trusting a suggestion. Three
-sections, top to bottom.
-
-**A. Model cards.** One card per model: what it predicts, the classes, the
-held-out macro-F1 / accuracy (and ROC-AUC for the binary models), the baseline
-it beats, and a one-line honest caveat (e.g. "priority is coupled to the SLA
-target"). This is the spec sheet.
-
-**B. Inspect a single case (predicted vs actual).** A dropdown of **held-out
-cases the models never trained on**. Selecting one shows, for all five models
-side by side, the predicted value, the confidence, the actual recorded value,
-and a ✓/✗ match marker. This lets a sceptical user watch the tool be right — and
-be wrong — on cases with a known answer.
-
-**C. Run the full held-out set.** A button that scores all five models on the
-entire held-out split and returns the metrics table. This is the "don't take my
-word for it" button: the headline numbers, reproduced live, on data the models
-did not see.
-
-**Design principles for this tab.**
-- Separation of concerns: cards = the claim, single case = the intuition, full
-  set = the evidence.
-- Only ever evaluates on the held-out split, never on training data, and says so.
+**Design principles.** One card, one glance; plain-language phrases, not class codes;
+confidence as a percentage beside each label; risk is the only strong colour.
 
 ---
 
-## 5. The five models (shared contract)
+## 4. Tab 2 — Explore the models (the trust screen)
 
-All five consume the **same inbound feature set** (the sheet's Y columns):
-case summary, tags, channel, plan tier, region, SLA target, tenure, month. No
-outcome or history fields are used as inputs, so the numbers are honest. The
-only difference between models is the target.
+Reached from the triage tab via the **Explore how the models work →** button.
 
-| Model | Predicts | Shown as |
-|---|---|---|
-| M1 | Case type | "Case type" |
-| M2 | Category | "Category" |
-| M3 | Priority | (feeds risk reasoning) |
-| M4 | Escalation risk | "Risk" band |
-| M5 | Assigned team | "Suggested route" |
+- **Model cards** — one per model: approach, inputs, split, the normalised held-out
+  metrics, and each model's signature metric and caveats.
+- **Normalised metrics table** — the same metric set across all models, side by side.
+- **Inspect a held-out case** — pick a model, then a case it never trained on, and
+  see predicted vs actual with a ✓/✗ marker.
+- **Confusion matrix & per-class report** — per model, to see where errors cluster.
+- **Training notebooks** — a download per model.
+
+Everything on this tab is computed on held-out data and says which split it used.
+
+---
+
+## 5. Feature contract (shared)
+
+All models use **inbound fields only**. **Tags are never an input** (leakage);
+`plan_tier`/`region_uk` are excluded except the direct priority model; protected
+attributes are never used. See `MODELS.md`.
 
 ---
 
 ## 6. What "good" looks like end-to-end
 
-Priya pastes a case → presses Triage → reads five fields and one sentence of
-reasoning → routes the case. If she doubts it, she switches to Tab 2, finds a
-similar past case, and sees the model was right on that one. Sam, before
-sign-off, presses **Run full held-out set** and reads the table. One app, two
-audiences, no black box.
+Priya pastes a case → presses Triage → reads the card, confirms the suggested tags,
+and glances at how two similar cases were resolved → routes the case. If she doubts
+it, she opens the exploration tab, finds a held-out case like hers, and sees the
+model was right on that one. Sam, before sign-off, reads the metrics table and the
+confusion matrices. One app, two audiences, no black box.
