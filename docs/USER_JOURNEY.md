@@ -5,6 +5,11 @@ A design document for the Gradio application that serves the predictive models
 two helper tools (tag suggestions, similar-case search) behind one decision-support
 app.
 
+The app is a single-page SaaS-style dashboard: a fixed left sidebar (brand, nav,
+profile), a top header with a **View models** button, a wider **Case details** panel
+beside a compact **Triage prediction** panel, and a full-width **Similar cases**
+table below. "View models" swaps the body for the exploration view.
+
 ---
 
 ## 1. Who uses it

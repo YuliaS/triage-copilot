@@ -38,7 +38,7 @@ macro-F1, weighted-F1, Cohen's kappa**, plus **ROC-AUC and PR-AUC** for the bina
 model — and each notebook also stores a **classification report** and **confusion
 matrix**. Each model keeps a *signature* metric relevant to its design. Splits are
 not forced to match: text models use a group-aware split; sequential models use a
-chronological split — each the honest choice for its task, and recorded with the
+chronological split — each the choice for its task, and recorded with the
 metrics.
 
 ### Held-out results

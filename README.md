@@ -9,20 +9,21 @@ in plain language. A Gradio app backed by scikit-learn models.
 
 ## What it does
 
-Two screens:
+A single-page dashboard with a left sidebar and two views:
 
-- **Triage a case** — paste a case summary (plus a few known fields), press *Triage
-  case*, and get: one result card (case type, category, two priority estimates,
-  suggested route, escalation risk, a *Why* line), **suggested tags**, and the most
-  **similar past cases** with how they were resolved. A *Load example* button fills a
-  worked case; an *Explore how the models work →* button jumps to the second tab.
-- **Explore the models** — model cards, the normalised held-out metrics table, a
-  held-out case inspector (predicted vs actual on cases the model never trained on),
-  a confusion matrix + per-class report per model, and a download button per
-  training notebook.
+- **Triage (default)** — a wider **Case details** panel (dominant case-summary box
+  with *Load example*, plus channel / plan / month / tenure / agent's priority /
+  tags) and a compact **Triage prediction** panel showing case type, category, two
+  priority estimates, suggested route and escalation risk as rows with confidence
+  bars, a red risk pill and a *Why* line. Below both, a full-width **Similar cases**
+  table (title, case type, category, priority, route, risk, similarity, created).
+  *Run triage* also auto-suggests tags into the (optional) tags box.
+- **View models** — the header button opens the exploration view: model cards, the
+  normalised held-out metrics table, a held-out case inspector, a confusion matrix +
+  per-class report per model, and a download button per training notebook.
 
-The Triage tab runs a **cascade**: case type and category are predicted from the
-summary, then feed the priority and escalation models.
+Triage runs a **cascade**: case type and category are predicted from the summary,
+then feed the priority and escalation models.
 
 ## Models
 
@@ -96,6 +97,4 @@ once to generate them, then launch the app.
 ## Credits
 
 Modelling approaches were contributed by several teammates during a hackathon
-(anonymised as Source A–F; the Category model was contributed by Scott). See
-`docs/MODELS.md`. Contributor names appear only in the documentation, never in the
-code or interface.
+(anonymised as Source A–F). See `docs/MODELS.md`.
