@@ -61,6 +61,8 @@ direct priority model; protected attributes are never used.
 ```
 case_pipeline.py         shared loading, splits, features, normalised evaluation,
                          similar-case retrieval and tag-suggestion helpers
+preprocess.py            rebuilds the cleaned modelling dataset from data/raw/*.csv,
+                         keeping only the columns the models and app use
 training/                one notebook per model; each imports case_pipeline, trains,
                          evaluates on a held-out split, refits on all data, and saves
                          a bundle to models/
@@ -69,7 +71,8 @@ app/
   run_app.py             headless launcher
 models/                  saved bundles (git-ignored; produced by the training notebooks)
 data/
-  cases_clean.xlsx       the cleaned dataset the pipeline reads
+  cases_clean.csv        the lean cleaned dataset the pipeline reads (preprocess.py output)
+  cases_clean.xlsx       audited export; source of the two audit flags preprocess carries over
   raw/                   the original monthly Q*.csv exports (provenance)
 docs/                    USER_JOURNEY.md, MODELS.md, pitch_slides.md
 ```
@@ -83,6 +86,9 @@ precomputed predictions so the app can show predicted-vs-actual without retraini
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+
+# 0. (optional) rebuild the cleaned dataset from data/raw/*.csv
+python preprocess.py         # writes data/cases_clean.csv
 
 # 1. build the models (writes models/*.joblib — these are git-ignored)
 jupyter nbconvert --to notebook --execute --inplace training/train_*.ipynb
